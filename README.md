@@ -2,7 +2,7 @@
 This package is made for analysis of subscriptions used by meteor application.
 
 ## Install package
-  meteor add liberation:subscription-audit
+    meteor add liberation:subscription-audit
 
 ## Goals
 This package allows to show and evaluate, which subscriptions are uses at a given page, their parameters, detect doubling subscriptions and turn them off freely.
