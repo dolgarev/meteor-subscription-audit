@@ -16,3 +16,4 @@ All commands are being done in browser console (but note, this package is tested
 * `SA.showParams(<index|subscription_id>)` - only info about parameters of subscription
 * `SA.showDups()` - shows info about doubling of subscriptions
 * `SA.stop(<index|subscription_id>)` - stop subscription
+* `SA.collList()` - show brief info about all collections

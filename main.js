@@ -104,5 +104,16 @@ _.extend(SA, {
     } else {
       console.error("Subscription %s not found", index);
     }
+  },
+  collList: function() {
+    var output = _.map(Meteor.connection._mongo_livedata_collections, function(collection, name) {
+      return {
+        'collection': name,
+        'size': collection.find().count()
+      }
+    });
+
+    console.info(new Date().toLocaleString())
+    console.table(output);
   }
 });
