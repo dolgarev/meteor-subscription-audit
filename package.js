@@ -11,4 +11,5 @@ Package.onUse(function (api) {
   api.versionsFrom('1.5')
   api.use(['ecmascript', 'ejson', 'underscore'], 'client')
   api.mainModule('main.js', 'client')
+  api.export('SA')
 })

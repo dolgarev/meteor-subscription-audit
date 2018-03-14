@@ -14,7 +14,7 @@ function _getSubscriptionByIndex (index) {
     : null
 }
 
-export default class SA {
+export class SA {
   static list () {
     const output = _.map(SUBSCRIPTIONS, sub => ({
       'id': sub.id,
