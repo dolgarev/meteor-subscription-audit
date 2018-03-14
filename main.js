@@ -1,119 +1,119 @@
-var subs = Meteor.connection._subscriptions;
+import { Meteor } from 'meteor/meteor'
+import { EJSON } from 'meteor/ejson'
+import { _ } from 'meteor/underscore'
 
-var _getSubscription = function(index) {
-  var key = +index >= 0 ? _.keys(subs)[+index] : index,
-    sub = _.isString(key) ? subs[key] : null;
+const SUBSCRIPTIONS = Meteor.connection._subscriptions
 
-  return sub;
-};
-
-if (_.isUndefined(SA)) {
-  SA = {};
+function _getSubscriptionByIndex (index) {
+  const idx = +index
+  const key = idx >= 0
+    ? _.keys(SUBSCRIPTIONS)[idx]
+    : idx
+  return _.isString(key)
+    ? SUBSCRIPTIONS[key]
+    : null
 }
 
-_.extend(SA, {
-  list: function() {
-    output = _.map(_.values(subs), function(sub) {
-      return {
-        'id': sub.id,
-        'name': sub.name,
-        'params': JSON.stringify(sub.params),
-        'inactive': sub.inactive,
-        'ready': sub.ready,
-        'ddp session': sub.connection._lastSessionId
-      };
-    });
-
+export class SA {
+  static list () {
+    const output = _.map(SUBSCRIPTIONS, sub => ({
+      'id': sub.id,
+      'name': sub.name,
+      'params': JSON.stringify(sub.params),
+      'inactive': sub.inactive,
+      'ready': sub.ready,
+      'ddp session': sub.connection._lastSessionId
+    }))
     console.info(new Date().toLocaleString())
-    console.table(output);
-  },
-  show: function(index, fields, isFormatted) {
-    var sub = _getSubscription(index);
-
-    if (sub) {
-      if (fields === '*') {
-        var output = sub;
-      } else {
-        fields = _.isArray(fields) ? fields : ['id', 'name', 'params', 'inactive', 'ready'];
-        var output = _.pick(sub, fields);
-      }
-
-      if (isFormatted) {
-        console.log(JSON.stringify(output, null, 2));
-      } else {
-        console.dir(output);
-      }
-    } else {
-      console.error("Subscription %s not found", index);
-    }
-  },
-  showDetails: function(index) {
-    this.show(index, '*');
-  },
-  showParams: function(index) {
-    this.show(index, ['params'], true);
-  },
-  showDups: function() {
-    var groups = _.filter(_.groupBy(_.values(subs), 'name'), function(group) {
-      return group.length > 1;
-    });
-
-    _.each(groups, function(group) {
-      var params = _.pluck(group, "params"),
-        dups = {};
-
-      _.each(group, function(sub) {
-        _.each(params, function(param) {
-          if (EJSON.equals(sub.params, param)) {
-            if (_.has(dups, sub.id)) {
-              dups[sub.id]++;
-            } else {
-              dups[sub.id] = 0;
-            }
-          }
-        });
-      });
-
-      var subIds = _.filter(_.keys(dups), function(subId) {
-        return dups[subId] > 0;
-      });
-
-      if (subIds.length) {
-        var idxSubs = _.indexBy(subs, 'id'),
-          output = {};
-
-        _.each(subIds, function(subId) {
-          output[subId] = {
-            "params": JSON.stringify(idxSubs[subId].params),
-            "ddp session": idxSubs[subId].connection._lastSessionId
-          }
-        });
-
-        console.group(group[0].name);
-        console.table(output);
-        console.groupEnd();
-      }
-    });
-  },
-  stop: function(index) {
-    var sub = _getSubscription(index);
-
-    if (sub) {
-      sub.stop();
-      console.info("Subscription %s was stopped", sub.id);
-    } else {
-      console.error("Subscription %s not found", index);
-    }
-  },
-  collList: function() {
-    var output = _.map(Meteor.connection._mongo_livedata_collections, function(collection, name) {
-      return {
-        'collection': name,
-        'size': collection.find().count()
-      }
-    });
-
-    console.info(new Date().toLocaleString())
-    console.table(output);
+    console.table(output)
   }
-});
+
+  static show (
+    index,
+    fields = ['id', 'name', 'params', 'inactive', 'ready'],
+    isFormattedOutput = false
+  ) {
+    const sub = _getSubscriptionByIndex(index)
+    if (!sub) {
+      console.error('Subscription %s not found', index)
+      return
+    }
+
+    const output = Array.isArray(fields)
+      ? _.pick(sub, fields)
+      : (fields === '*' ? sub : null)
+
+    if (isFormattedOutput) {
+      console.log(JSON.stringify(output, null, 2))
+    } else {
+      console.dir(output)
+    }
+  }
+
+  static showDetails (index) {
+    this.show(index, '*')
+  }
+
+  static showParams (index) {
+    this.show(index, ['params'], true)
+  }
+
+  static stop (index) {
+    const sub = _getSubscriptionByIndex(index)
+    if (sub) {
+      sub.stop()
+      console.info('Subscription %s was stopped', sub.id)
+    } else {
+      console.error('Subscription %s not found', index)
+    }
+  }
+
+  static collList () {
+    const collections = Meteor.connection._mongo_livedata_collections
+    const output = _.map(collections, (collection, name) => ({
+      collection: name,
+      size: collection.find().count()
+    }))
+    console.info(new Date().toLocaleString())
+    console.table(output)
+  }
+
+  static showDups () {
+    const idxSubsByName = _.groupBy(_.values(SUBSCRIPTIONS), 'name')
+    const subsGroups = _.filter(idxSubsByName, group => group.length > 1)
+
+    _.each(subsGroups, subsGroup => {
+      const params = _.pluck(subsGroup, 'params')
+      const dups = {}
+
+      _.each(subsGroup, sub => {
+        const subscriptionId = sub.id
+        _.each(params, param => {
+          if (EJSON.equals(sub.params, param)) {
+            dups[subscriptionId] = _.has(dups, subscriptionId)
+              ? dups[subscriptionId] + 1
+              : 0
+          }
+        })
+      })
+
+      const subIds = _.filter(_.keys(dups), subId => dups[subId] > 0)
+      if (subIds.length === 0) return
+
+      const idxSubsById = _.indexBy(SUBSCRIPTIONS, 'id')
+      const output = {}
+      _.each(subIds, subId => {
+        const sub = idxSubsById[subId]
+        if (sub) {
+          output[subId] = {
+            'params': JSON.stringify(sub.params),
+            'ddp session': sub.connection._lastSessionId
+          }
+        }
+      })
+      console.group(subsGroup[0].name)
+      console.table(output)
+      console.groupEnd()
+    })
+  }
+}
