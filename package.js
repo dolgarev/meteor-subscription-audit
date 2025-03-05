@@ -3,7 +3,7 @@
 Package.describe({
   name: "liberation:subscription-audit",
   summary: "Analyzing subscriptions used by Meteor applications.",
-  version: "0.0.4",
+  version: "0.0.5",
   git: "https://github.com/dolgarev/meteor-subscription-audit.git",
 });
 
